@@ -1,3 +1,4 @@
+% title Usage of zk-SNARKS
 # Usage of zk-SNARKS
 
 ## Generic zk-SNARK scheme
@@ -24,9 +25,9 @@ meanings. For example, if the verifier were a web server holding a
 database of hashed passwords and the prover were the web client of a
 registered user, the latter does not need to send their password *w*
 (as cleartext or in disguise) in order to login, but only a proof of
-the above statement with predicate
+the above statement with predicate:
 
-$$ F(x, w) = \{H(w) == x\}$$
+$$ F(x, w) := \{H(w) = x\}$$
 
 where $H$ is the hash function used by the server, with *W* being the
 preimage set and $X$ the set of stored hashed passwords in the
@@ -99,9 +100,10 @@ subsequent proof generation and verification. In particular, the CRS
 consists of a proving key *pk* (uniformly used by all Provers) and a
 uniquely correlated verification key *vk* (uniformly used by all
 Verifiers). Computation of CRS involves also a once used randomness
-*lambda*, so that it can formally be expressed as follows:
+$\mathit{lambda}$, so that it can formally be expressed as follows:
 
-$$ (F, lambda) \mapsto CRS := (pk, vk) = Setup(F, lambda)$$
+$$ (F, \mathit{lambda}) \mapsto CRS := (pk, vk) = 
+   \mathrm{Setup}(F, \mathit{lambda})$$
 
 It is essential that *lambda* remains forever secret: leakage of
 randomness would allow a malicious prover to generate false proofs
@@ -118,7 +120,7 @@ $F(x, \cdot)$ is satisfiable, without disclosing any info about $w$
 (i.e., except for the claim that it exists). This can formally be
 expressed as
 
-$$ (pk, x, w) \mapsto \pi = Prover(pk, x, w) $$
+$$ (\mathit{pk}, x, w) \mapsto \pi = Prover(\mathit{pk}, x, w) $$
 
 The Verifier uses the verifying part $\mathit{vk}$ of the CRS to
 operate upon the provided proof, accepting or rejecting according to
