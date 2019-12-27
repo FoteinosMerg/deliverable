@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Usage of zk-SNARKS &#8212; Python  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="usage-of-zk-snarks">
+<h1>Usage of zk-SNARKS<a class="headerlink" href="#usage-of-zk-snarks" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="generic-zk-snark-scheme">
+<h2>Generic zk-SNARK scheme<a class="headerlink" href="#generic-zk-snark-scheme" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="preliminaries">
+<h3>Preliminaries<a class="headerlink" href="#preliminaries" title="Permalink to this headline">¶</a></h3>
+<p>zk-SNARK (Zero-Knowledge Succinct Non-interactive ARgument of Knowledge) is a
+general purpose cryptographic scheme for generating and verifying zero-knowledge
+proofs in efficient and non-interactive fashion. Statement to be proven are
+claims of knowledge of a quantity <em>w</em> (called <em>withness</em>) satisfying <em>F(x, w)</em>,
+where <em>x</em> is a public quantity (called <em>instance</em>) and <em>F</em> is a public relation
+(called <em>predicate</em>). More accurately, without revealing info about <em>w</em>,
+the prover wishes to generate a proof of the following statement:</p>
+<div class="math notranslate nohighlight">
+\[\text{given } x \in X \text{ and } F: X \times W \mapsto \{0, 1\}, \text{ I know a } w \text{ such that } F(x, w) = 1\]</div>
+<p>where <em>X</em> is the set of acceptable public instances, <em>W</em> is the set of acceptable
+private witnesses and 0, 1 hold here their usual logical meanings. For example,
+if the verifier were a web server holding a database of hashed passwords and
+prover were the web client of a registered user, the latter does not need
+to send their password <em>w</em> (as cleartext or in disguise) in order to login,
+but only a proof of the above statement with predicate</p>
+<div class="math notranslate nohighlight">
+\[F(x, w) = \{H(w) == x\}\]</div>
+<p>where <em>H</em> is the hash function used by the server, with <em>W</em> being the preimage set
+and <em>X</em> the set of stored hashed passwords in the database. To give a more
+relevant example from the cryptocurrency framework, if <em>w</em> were the encoding of
+the private payment details of a particular transaction and <em>x</em> the encrypted
+version of this data, then the predicate <em>F</em> would typically be</p>
+<div class="math notranslate nohighlight">
+\[F(x, w) = \{w \text{ is a well-formed transaction and } x \text{ is the encryption of it}\}\]</div>
+<p>Note that <em>F</em> is predefined and fixed, which allows for <em>non-interactive</em> mode (see below).
+Generation and verification of proofs for various witness-instance pairs <em>(w, x)</em>
+is instead a massively repeated procedure. Efficiency of the cryptosystem refers
+thus not to its initial setup (which only involves <em>F</em>) but to the generation and
+verification of proofs (involving arbitrary instantiations of <em>(w, x)</em> pairs),
+which naturally leads to the notion of <em>succinctness</em> (see below).</p>
+</div>
+<div class="section" id="predicate-reduction">
+<h3>Predicate reduction<a class="headerlink" href="#predicate-reduction" title="Permalink to this headline">¶</a></h3>
+<p>In theory, any NP-complete statement which is expressible in the above form may
+serve as the fixed public predicate of a zk-SNARK cryptosystem. However,
+transforming the predicate so that it be amenable to low-level cryptographic
+operations is a genuine challenge. That is, except if following recipes,
+configuration of the cryptosystem may well be a non-trivial step
+from the implementors’ viewpoint.</p>
+<p>After completion of the initial setup, the predicate <em>F</em> may be thought of as a
+fixed circuit of logical gates. In a blockchain context, this means
+to encode in the form of a circuit the consensus rules of the network. Satisfaction
+of <em>F</em> for a witness-instance pair <em>(w, x)</em> emulates a particular state of the
+circuit after running it with that input. zk-SNARK libraries usually avail
+mechanisms for modelling predicates as logical circuits which resemble
+the concept of <em>protoboard</em> (prototyping board) from electrical engineering: the
+cryptosystem’s configuration presupposes allocation of <em>F</em>’s “chips” to a
+protoboard.</p>
+<p>This is however only a convenient abstraction. What in fact one must
+do is appropriately reduce the NP-statement <em>F</em> to a system of polynomial
+equations. Satisfiability of <em>F</em> for a given pair <em>(w, x)</em> amounts to
+<em>(x, w)</em> being (with overwhelming probability) a solution to this algebraic
+system. More specifically, it has been proven that any NP-complete statement
+can be reduced to such system of a special kind, usually referred to as a
+<em>set of quadratic constraints</em>, with each zk-SNARK proof attesting that this
+set of constraints is satisfied by some concrete input. Further
+results show that any set of quadratic constraints can be conveniently flattened
+to what is known as <em>R1CS</em> (<em>Rank 1 Constraint System</em>). Predicate reduction amounts
+thus to reformulating an NP-complete statement as R1CS.</p>
+</div>
+<div class="section" id="cryptographic-flow">
+<h3>Cryptographic flow<a class="headerlink" href="#cryptographic-flow" title="Permalink to this headline">¶</a></h3>
+<p>We expose here the ZS-NARK cryptographic flow for reference, in order to
+gradually attain semi-formal language and terminology. The flow involves
+three basic algorithms run by homonymous and mutually independent
+components: <em>Setup</em>, <em>Prover</em> and <em>Verifier</em>. How these components are
+distributed among network entities depends on the protocol under
+implementation.</p>
+<p>The Setup algorithm is typically run once by a unanimously trusted party. It is
+fed with a R1CS (i.e., the fixed public predicate <em>F</em>) and outputs the public
+CRS (<em>Common Reference String</em>) involved in any subsequent proof generation
+and verification. In particular, the CRS consists of a proving key <em>pk</em>
+(uniformly used by all Provers) and a uniquely correlated verification key <em>vk</em>
+(uniformly used by all Verifiers). Computation of CRS involves also a once
+used randomness <em>lambda</em>, so that it can formally be expressed as follows:</p>
+<div class="math notranslate nohighlight">
+\[(F, lambda) \mapsto CRS := (pk, vk) = Setup(F, lambda)\]</div>
+<p>It is essential that <em>lambda</em> remains forever secret: leakage of randomness
+would allow a malicious prover to generate false proofs that
+can erroneously be verified. Trustedness of the Setup party must thus be
+equivalent to the unanimously accepted guarantee, that the <em>lambda</em> parameter
+has irreversibly been eliminated after CRS generation (which is the reason for
+the destruction ceremonies surrounding ZCash etc.).</p>
+<p>Upon every proof generation, the Prover is fed with a public instance <em>x</em> and a
+secret witness <em>w</em> for it. Using the proving part <em>pk</em> of the CRS, the prover
+generates a proof attesting that <em>F(x, . )</em> is satisfiable, without disclosing
+any info about <em>w</em> (i.e., except for the claim that it exists). This can
+formally be expressed as</p>
+<div class="math notranslate nohighlight">
+\[(pk, x, w) \mapsto \pi = Prover(pk, x, w)\]</div>
+<p>The Verifier uses the verifying part <em>vk</em> of the CRS to operate upon the
+provided proof, accepting or rejecting according to whether it was found to
+be valid, resp. invalid:</p>
+<div class="math notranslate nohighlight">
+\[(vk, x, \pi) \mapsto Verifier(vk, x, \pi) \in \{0, 1\}\]</div>
+<p>Note that typically anyone can run a Verifier.</p>
+<p>The whole flow is summarized in the following figure:</p>
+<p>…[Figure] (1)</p>
+<p>In this context, the zk-SNARK properties are formalized as follows:</p>
+<p><strong>zk</strong> (<em>Zero Knowledge</em>): The generated proof conveys no info about <em>w</em> beyond
+the claim of its existence, i.e., that <em>F(x, .)</em> is satisfiable.</p>
+<p><strong>S</strong> (<em>Succint</em>): The size of proofs is small, constant and independent
+of the system’s constraints and public inputs. More accurately, ignoring dependence
+on security parameters, proof generation is <em>O(1)</em> and proof verification is <em>O(k)</em>,
+where <em>k</em> stands for the proof uniform bitsize. The bottleneck of initial setup needs
+not be taken into account.</p>
+<p><strong>N</strong> (<em>Non-interactive</em>): The only interaction between Prover and Verifier is the
+transmission of the generated proof (one communication step). Any intermediate
+computation required for proof generation and verification has been absorbed in
+the precomputation of the CRS (involved via usage of <em>pk</em> and <em>vk</em>).</p>
+<p>Generic requirements may also be formalized as follows:</p>
+<p><strong>Completeness</strong>: Correct proofs (i.e., generated upon a correct witness by a honest prover)
+always verify. More accurately,</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\begin{split}\text{for any } \pi = Prover(pk, x, w) \text{ such that } F(x, w) = 1\\
+\text{ there holds } Verifier(vk, x, \pi) = 1\end{split}\]</div>
+</div></blockquote>
+<p><strong>Soundness</strong>: No false proof (i.e., generated upon incorrect witness by a malicious prover)
+ever verifies. More accurately,</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\begin{split}\text{for any } x \text{ such that } F(x, .) \text{ not satisfiable, there exist no } w \text{ such that } \\
+Verifier(vk, x, \pi) = 1 \text{ with } \pi = Prover(pk, x, w)\end{split}\]</div>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="the-libsnark-library">
+<h2>The <code class="docutils literal notranslate"><span class="pre">libsnark</span></code> library<a class="headerlink" href="#the-libsnark-library" title="Permalink to this headline">¶</a></h2>
+<p>In view of the above nomenclature, we will here try to determine
+respective API calls to the <code class="docutils literal notranslate"><span class="pre">libsnark</span></code> library. Note that in
+the Libsnark unofficial documentation and terminology, the Setup
+component is referred to as <em>generator</em>, public instances as
+<em>primary inputs</em> and secret witnesses as <em>auxiliary inputs</em>.</p>
+<p>Libsnark provides a class <code class="docutils literal notranslate"><span class="pre">protoboard</span></code> for generating CRSs upon arbitrary
+R1CS circuits, i.e., allowing for great configurability with respect to the public
+predicate. This is crucial for our use case, since the consensus
+rules to be modelled are not precisely known in advance. It should be
+nevertheless mentioned that Libsnark provides also a series of <em>gadgets</em>,
+i.e., ready made wrappers around protoboards that automatically handle R1CS and witness
+generation for a broad range of special cases. These functionalities are the
+<code class="docutils literal notranslate"><span class="pre">generate_r1cs_constraints()</span></code> and <code class="docutils literal notranslate"><span class="pre">generate_r1cs_witness()</span></code> public methods
+of gadget objects respectively.</p>
+<div class="section" id="libsnark-api-calls">
+<h3><code class="docutils literal notranslate"><span class="pre">libsnark</span></code> API calls<a class="headerlink" href="#libsnark-api-calls" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="r1cs-generation">
+<h4>R1CS generation<a class="headerlink" href="#r1cs-generation" title="Permalink to this headline">¶</a></h4>
+<p>We first need to initialize elliptic curve parameters:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="n">libff</span><span class="o">::</span><span class="n">Fr</span><span class="o">&lt;</span><span class="n">default_r1cs_ppzksnark_pp</span><span class="o">&gt;</span> <span class="n">FieldT</span><span class="p">;</span>
+<span class="n">default_r1cs_ppzksnark_pp</span><span class="o">::</span><span class="n">init_public_params</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Protoboard creation and allocation of variables upon it proceeds as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">protoboard</span><span class="o">&lt;</span><span class="n">FieldT</span><span class="o">&gt;</span> <span class="n">pb</span><span class="p">;</span>
+
+<span class="n">pb_variable</span><span class="o">&lt;</span><span class="n">FieldT</span><span class="o">&gt;</span> <span class="n">var_1</span><span class="p">;</span>
+<span class="n">pb_variable</span><span class="o">&lt;</span><span class="n">FieldT</span><span class="o">&gt;</span> <span class="n">var_2</span><span class="p">;</span>
+<span class="p">...</span>
+
+<span class="n">var_1</span><span class="p">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">pb</span><span class="p">,</span> <span class="s">&quot;var_1&quot;</span><span class="p">);</span>
+<span class="n">var_2</span><span class="p">.</span><span class="n">allocate</span><span class="p">(</span><span class="n">pb</span><span class="p">,</span> <span class="s">&quot;var_2&quot;</span><span class="p">);</span>
+<span class="p">...</span>
+</pre></div>
+</div>
+<p>We can then specify that the first <em>n</em> variables constitute primary input (i.e., public instance)
+as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">pb</span><span class="p">.</span><span class="n">set_input_sizes</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>in which case the last <em>m - n</em> variables will correspond to the auxiliary input
+(i.e., secret witness). It is then straightforward to impose quadratic constraints on
+the above allocated variables by means of the <code class="docutils literal notranslate"><span class="pre">add_r1cs_constraint</span></code> method.
+For example, a constraint <code class="docutils literal notranslate"><span class="pre">var_1</span> <span class="pre">*</span> <span class="pre">var_1</span> <span class="pre">=</span> <span class="pre">var_3</span></code> would be enforced as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">pb</span><span class="p">.</span><span class="n">add_r1cs_constraint</span><span class="p">(</span><span class="n">r1cs_constraint</span><span class="o">&lt;</span><span class="n">FieldT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">var_1</span><span class="p">,</span> <span class="n">var_1</span><span class="p">,</span> <span class="n">var_3</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>After imposing further constraints, the resulting circuit is finally exported:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">r1cs_constraint_system</span><span class="o">&lt;</span><span class="n">FieldT</span><span class="o">&gt;</span> <span class="n">constraint_system</span> <span class="o">=</span> <span class="n">pb</span><span class="p">.</span><span class="n">get_constraint_system</span><span class="p">();</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="setup">
+<h4>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h4>
+<p>Once reduced to a R1CS as above, the public predicate can be fed to the CRS generator:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">r1cs_ppzksnark_keypair</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span> <span class="n">keypair</span> <span class="o">=</span> <span class="n">r1cs_ppzksnark_generator</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">r1cs_constraint_system</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If one wishes to make use of the Groth16 zk-SNARK protocol, the above statement may slightly be
+modified as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">r1cs_gg_ppzksnark_keypair</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span> <span class="n">keypair</span> <span class="o">=</span> <span class="n">r1cs_gg_ppzksnark_generator</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">r1cs_constraint_system</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>In either case, the proving and verification keys are directly accessible as the <code class="docutils literal notranslate"><span class="pre">pk</span></code> and <code class="docutils literal notranslate"><span class="pre">vk</span></code>
+attributes of the generated keypair (see below).</p>
+</div>
+<div class="section" id="prover">
+<h4>Prover<a class="headerlink" href="#prover" title="Permalink to this headline">¶</a></h4>
+<p>Given the above CRS <code class="docutils literal notranslate"><span class="pre">keypair</span></code>, proof generation proceeds as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">r1cs_ppzksnark_proof</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span> <span class="n">proof</span> <span class="o">=</span> <span class="n">r1cs_ppzksnark_prover</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">keypair</span><span class="p">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">pb</span><span class="p">.</span><span class="n">primary_input</span><span class="p">(),</span> <span class="n">pb</span><span class="p">.</span><span class="n">auxiliary_input</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>In the Groth16 zk-SNARK protocol, the corresponding formulation would be</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">r1cs_gg_ppzksnark_proof</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span> <span class="n">proof</span> <span class="o">=</span> <span class="n">r1cs_gg_ppzksnark_prover</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">keypair</span><span class="p">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">pb</span><span class="p">.</span><span class="n">primary_input</span><span class="p">(),</span> <span class="n">pb</span><span class="p">.</span><span class="n">auxiliary_input</span><span class="p">());</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="verifier">
+<h4>Verifier<a class="headerlink" href="#verifier" title="Permalink to this headline">¶</a></h4>
+<p>The above generated <code class="docutils literal notranslate"><span class="pre">proof</span></code> can be verified as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">ans</span> <span class="o">=</span> <span class="n">r1cs_ppzksnark_verifier_strong_IC</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">keypair</span><span class="p">.</span><span class="n">vk</span><span class="p">,</span> <span class="n">pb</span><span class="p">.</span><span class="n">primary_input</span><span class="p">(),</span> <span class="n">proof</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>with the corresponding formulation in the Groth16 context being</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">ans</span> <span class="o">=</span> <span class="n">r1cs_gg_ppzksnark_verifier_strong_IC</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">keypair</span><span class="p">.</span><span class="n">vk</span><span class="p">,</span> <span class="n">pb</span><span class="p">.</span><span class="n">primary_input</span><span class="p">(),</span> <span class="n">proof</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="optimizing-verification">
+<h3>Optimizing verification<a class="headerlink" href="#optimizing-verification" title="Permalink to this headline">¶</a></h3>
+<p>For the purpose of faster verification, the verification key <code class="docutils literal notranslate"><span class="pre">vk</span></code> can be further processed during
+the initial setup, yielding the so called <em>processed verification key</em> <code class="docutils literal notranslate"><span class="pre">pvk</span></code>.
+In particular, a small amount of extra precomputed info can be added to it,
+in which case the Verifier algorithm must also be modified appropriately (<em>online</em> Verifier).
+In this case, Figure 1 transforms as follows:</p>
+<p>… [Figure] (2)</p>
+<p>In Libsnark, preprocessing of the verification key corresponds to the following statement:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">r1cs_ppzksnark_processed_verification_key</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span> <span class="n">pvk</span> <span class="o">=</span> <span class="n">r1cs_ppzksnark_verifier_process_vk</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">keypair</span><span class="p">.</span><span class="n">vk</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Proof verification should then proceed as follows:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">ans</span> <span class="o">=</span> <span class="n">r1cs_ppzksnark_online_verifier_strong_IC</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">pvk</span><span class="p">,</span> <span class="n">pb</span><span class="p">.</span><span class="n">primary_input</span><span class="p">(),</span> <span class="n">proof</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>the corresponding statement in the Groth16 zk-SNARK context being</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">ans</span> <span class="o">=</span> <span class="n">r1cs_gg_ppzksnark_online_verifier_strong_IC</span><span class="o">&lt;</span><span class="n">ppT</span><span class="o">&gt;</span><span class="p">(</span><span class="n">pvk</span><span class="p">,</span> <span class="n">pb</span><span class="p">.</span><span class="n">primary_input</span><span class="p">(),</span> <span class="n">proof</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Note that proof generation is not affected by the usage of preprocessed verification keys.</p>
+</div>
+</div>
+<div class="section" id="application-in-our-use-case">
+<h2>Application in our use case<a class="headerlink" href="#application-in-our-use-case" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="predicate-formulation-and-circuit-construction">
+<h3>Predicate formulation and circuit construction<a class="headerlink" href="#predicate-formulation-and-circuit-construction" title="Permalink to this headline">¶</a></h3>
+<p>[Describe how to encode the network consensus rules as the cryptosystem’s fixed public predicate
+and how to reduce the latter to a R1CS circuit]</p>
+</div>
+<div class="section" id="role-distribution-among-network-entities">
+<h3>Role distribution among network entities<a class="headerlink" href="#role-distribution-among-network-entities" title="Permalink to this headline">¶</a></h3>
+<p>[Describe which network entities will run the algorithms <em>Setup</em> or <em>Prover</em>
+or <em>Verifier</em> or combinations thereof]</p>
+</div>
+<div class="section" id="toolkit-api-calls">
+<h3>Toolkit API calls<a class="headerlink" href="#toolkit-api-calls" title="Permalink to this headline">¶</a></h3>
+<p>[In view of the above role distribution, formulate API calls at the network layer
+wrapping or utilizing API calls to Libsnark]</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
