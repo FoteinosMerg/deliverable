@@ -10,7 +10,7 @@ Preliminaries
 
 zk-SNARK (Zero-Knowledge Succinct Non-interactive ARgument of Knowledge) is a 
 general purpose cryptographic scheme for generating and verifying zero-knowledge 
-proofs in efficient and non-interactive fashion. Statement to be proven are 
+proofs in efficient and non-interactive fashion. Statements to be proven are 
 claims of knowledge of a quantity *w* (called *withness*) satisfying *F(x, w)*, 
 where *x* is a public quantity (called *instance*) and *F* is a public relation 
 (called *predicate*). More accurately, without revealing info about *w*, 
