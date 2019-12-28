@@ -155,7 +155,7 @@ In this context, the zk-SNARK properties are formalized as follows:
 
 Generic requirements may also be formalized as follows:
 
-  * *Completeness**: Correct proofs (i.e., generated upon a correct
+  * *Completeness*: Correct proofs (i.e., generated upon a correct
   witness by a honest prover) always verify. More accurately,
 
   $$
@@ -166,7 +166,7 @@ Generic requirements may also be formalized as follows:
   \end{align*}
   $$
   
-  * *Soundness**: No false proof (i.e., generated upon incorrect
+  * *Soundness*: No false proof (i.e., generated upon incorrect
   witness by a malicious prover) ever verifies. More accurately,
 
   $$
@@ -176,6 +176,7 @@ Generic requirements may also be formalized as follows:
   &\mathrm{Verifier}(vk, x, \pi) = 1 \text{ with } \pi =
   \mathrm{Prover}(pk, x, w)
   \end{align*}
+  $$
 
 ### `libsnark` library
 
