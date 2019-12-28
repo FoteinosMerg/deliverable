@@ -1,5 +1,5 @@
-% title Usage of zk-SNARKS
-# Usage of zk-SNARKS
+% title Usage of zk-SNARKs
+# Usage of zk-SNARKs
 
 ## Generic zk-SNARK scheme
 
@@ -20,7 +20,7 @@ $$
 $$
 
 where $X$ is the set of acceptable public instances, $W$ is the set of
-acceptable private witnesses and 0, 1 hold here their usual logical
+acceptable private witnesses and 0, 1 hold their usual logical
 meanings. For example, if the verifier were a web server holding a
 database of hashed passwords and the prover were the web client of a
 registered user, the latter does not need to send their password *w*
@@ -29,7 +29,7 @@ the above statement with predicate:
 
 $$ F(x, w) := \{H(w) = x\}$$
 
-where $H$ is the hash function used by the server, with *W* being the
+where $H$ is the hash function used by the server, *W* being the
 preimage set and $X$ the set of stored hashed passwords in the
 database. To give a more relevant example from the cryptocurrency
 framework, if $w$ were the encoding of the private payment details of
@@ -64,17 +64,17 @@ thought of as a fixed circuit of logical gates. In a blockchain
 context, this means to encode in the form of a circuit the consensus
 rules of the network. Satisfaction of $F$ for a witness-instance pair
 $(w, x)$ emulates a particular state of the circuit after running it
-with that input. zk-SNARK libraries usually avail mechanisms for
-modelling predicates as logical circuits which resemble the concept of
+with that input. zk-SNARK libraries usually avail a mechanism for
+modelling predicates as logical circuits which resembles the concept of
 *protoboard* (prototyping board) from electrical engineering: the
 cryptosystem's configuration presupposes allocation of $F$'s "chips"
-to a protoboard.
+to the protoboard.
 
 This is however only a convenient abstraction. What in fact one must
-do is appropriately reduce the NP-statement $F$ to a system of
+do is appropriately reduce the NP-statement $F$ to a quadratic system of
 polynomial equations. Satisfiability of $F$ for a given pair $(w, x)$
 amounts to $(x, w)$ being (with overwhelming probability) a solution
-to this algebraic system. More specifically, it has been proven that
+to this system of equations. More specifically, it has been proven that
 any NP-complete statement can be reduced to such system of a special
 kind, usually referred to as a *set of quadratic constraints*, with
 each zk-SNARK proof attesting that this set of constraints is
@@ -86,11 +86,11 @@ thus to reformulating an NP-complete statement as R1CS.
 
 ### Cryptographic flow
 
-We expose here the ZS-NARK cryptographic flow for reference, in order to 
-gradually attain semi-formal language and terminology. The flow involves 
-three basic algorithms run by homonymous and mutually independent 
+We expose here the ZS-NARK cryptographic flow for reference, in order to
+gradually attain semi-formal language and terminology. The flow involves
+three basic algorithms run by homonymous and mutually independent
 components: *Setup*, *Prover* and *Verifier*. How these components are
-distributed among network entities depends on the protocol under 
+distributed among network entities depends on the protocol under
 implementation.
 
 The Setup algorithm is typically run once by a unanimously trusted
@@ -102,22 +102,22 @@ uniquely correlated verification key *vk* (uniformly used by all
 Verifiers). Computation of CRS involves also a once used randomness
 $\mathit{lambda}$, so that it can formally be expressed as follows:
 
-$$ (F, \mathit{lambda}) \mapsto CRS := (pk, vk) = 
+$$ (F, \mathit{lambda}) \mapsto CRS := (pk, vk) =
    \mathrm{Setup}(F, \mathit{lambda})$$
 
-It is essential that *lambda* remains forever secret: leakage of
+It is essential that $\mathit{lambda}$ remains forever secret: leakage of
 randomness would allow a malicious prover to generate false proofs
 that can erroneously be verified. Trustedness of the Setup party must
 thus be equivalent to the unanimously accepted guarantee, that the
-*lambda* parameter has irreversibly been eliminated after CRS
+$\mathit{lambda}$ parameter has irreversibly been eliminated after CRS
 generation (which is the reason for the destruction ceremonies
 surrounding ZCash etc.).
 
 Upon every proof generation, the Prover is fed with a public instance
 $x$ and a secret witness $w$ for it. Using the proving part
-$\mathit{pk}$ of the CRS, the prover generates a proof attesting that
-$F(x, \cdot)$ is satisfiable, without disclosing any info about $w$
-(i.e., except for the claim that it exists). This can formally be
+$\mathit{pk}$ of the CRS, the prover generates a proof $\pi$ attesting that
+$F(x, \cdot)$ is satisfiable by some known $w$, without disclosing any info
+about $w$ (i.e., except for the claim that it is known). This can formally be
 expressed as
 
 $$ (\mathit{pk}, x, w) \mapsto \pi = Prover(\mathit{pk}, x, w) $$
@@ -137,21 +137,21 @@ The whole flow is summarized in the following figure:
 In this context, the zk-SNARK properties are formalized as follows:
 
   * *zk* (*Zero Knowledge*): The generated proof conveys no info about
-  $w$ beyond the claim of its existence, i.e., that $F(x, .)$ is
-  satisfiable.
+  $w$ beyond the claim of it being known, i.e., that $F(x, .)$ is
+  satisfied by it.
 
   * *S* (*Succint*): The size of proofs is small, constant and
   independent of the system's constraints and public inputs. More
   accurately, ignoring dependence on security parameters, proof
-  generation is $O(1)$ and proof verification is $O(k)$, where $k$
+  generation is $O(1)$ and verification is $O(k)$, where $k$
   stands for the proof uniform bitsize. The bottleneck of initial
   setup needs not be taken into account.
 
   * *N* (*Non-interactive*): The only interaction between Prover and
-  Verifier is the transmission of the generated proof (one
+  Verifier is the transmission of the produced proof (one
   communication step). Any intermediate computation required for proof
   generation and verification has been absorbed in the precomputation
-  of the CRS (involved via usage of $\mathit{pk} and \mathit{vk}).
+  of the CRS (involved via usage of $\mathit{pk}$ and $\mathit{vk}$).
 
 Generic requirements may also be formalized as follows:
 
@@ -160,18 +160,18 @@ Generic requirements may also be formalized as follows:
 
   $$
   \begin{align*}
-  &\textrm{for any } \pi = 
-  \mathrm{Prover}(pk, x, w) \textrm{ such that } F(x, w) = 1\\ 
+  &\textrm{for any } \pi =
+  \mathrm{Prover}(pk, x, w) \textrm{ such that } F(x, w) = 1,\\
   &\textrm{there holds } \mathrm{Verifier}(vk, x, \pi) = 1
   \end{align*}
   $$
-  
+
   * *Soundness*: No false proof (i.e., generated upon incorrect
   witness by a malicious prover) ever verifies. More accurately,
 
   $$
   \begin{align*}
-  &\textrm{for any } x \textrm{ such that } F(x, .) 
+  &\textrm{for any } x \textrm{ such that } F(x, .)
   \textrm{ not satisfiable, there exists no } w \text{ such that } \\
   &\mathrm{Verifier}(vk, x, \pi) = 1 \text{ with } \pi =
   \mathrm{Prover}(pk, x, w)
@@ -180,10 +180,10 @@ Generic requirements may also be formalized as follows:
 
 ### `libsnark` library
 
-In view of the above nomenclature, we will here try to determine 
-respective API calls to the `libsnark` library. Note that in 
-the Libsnark unofficial documentation and terminology, the Setup 
-component is referred to as *generator*, public instances as 
+In view of the above nomenclature, we will here try to determine
+respective API calls to the `libsnark` library. Note that in
+the Libsnark unofficial documentation and terminology, the Setup
+component is referred to as *generator*, public instances as
 *primary inputs* and secret witnesses as *auxiliary inputs*.
 
 Libsnark provides a class `protoboard` for generating CRSs upon
@@ -204,8 +204,8 @@ methods of gadget objects respectively.
 We first need to initialize elliptic curve parameters:
 
 ```c
-typedef libff::Fr<default_r1cs_ppzksnark_pp> FieldT;
 default_r1cs_ppzksnark_pp::init_public_params();
+typedef libff::Fr<default_r1cs_ppzksnark_pp> FieldT;
 ```
 
 Protoboard creation and allocation of variables upon it proceeds as
@@ -230,16 +230,16 @@ input (i.e., public instance) as follows:
 pb.set_input_sizes(n);
 ```
 
-in which case the last $m - n$ variables will correspond to the
+in which case the last $m - n$ variables will correspond to
 auxiliary input (i.e., secret witness). It is then straightforward to
 impose quadratic constraints on the above allocated variables by means
-of the `add_r1cs_constraint` method. For example, a constraint
-`var_1 * var_1 = var_3` would be enforced as follows:
+of the `add_r1cs_constraint()` method. For example, a constraint
+`var_1 ^ 2 = var_3` would be enforced as follows:
 
 ```c
 pb.add_r1cs_constraint(r1cs_constraint<FieldT>(var_1, var_1, var_3));
 ```
-            
+
 After imposing further constraints, the resulting circuit is finally
 exported:
 
@@ -289,7 +289,7 @@ The above generated ``proof`` can be verified as follows:
 bool ans = r1cs_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, pb.primary_input(), proof);
 ```
 
-with the corresponding formulation in the Groth16 context being
+with the corresponding Groth16 formulation being
 
 ```c
 bool ans = r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, pb.primary_input(), proof);
@@ -297,7 +297,7 @@ bool ans = r1cs_gg_ppzksnark_verifier_strong_IC<ppT>(keypair.vk, pb.primary_inpu
 
 ### Optimizing verification
 
-For the purpose of faster verification, the verification key ``vk``
+For the purpose of faster verification, ``vk``
 can be further processed during the initial setup, yielding the so
 called *processed verification key* ``pvk``. In particular, a small
 amount of extra precomputed info can be added to it, in which case the
@@ -319,7 +319,7 @@ Proof verification should then proceed as follows:
 bool ans = r1cs_ppzksnark_online_verifier_strong_IC<ppT>(pvk, pb.primary_input(), proof);
 ```
 
-the corresponding statement in the Groth16 zk-SNARK context being
+the corresponding Groth16 statement being
 
 ```c
 bool ans = r1cs_gg_ppzksnark_online_verifier_strong_IC<ppT>(pvk,
