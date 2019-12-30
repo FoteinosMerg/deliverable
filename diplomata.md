@@ -88,6 +88,27 @@ requirements 1-4.
 
 #### Cryptographic flow
 
+Let $t$ be a title held by a Holder $H$ and issued by Issuer $I$. In order for
+$H$ to be able to anonymously prove possession of $t$ at any future moment, the
+following Steps 1-3 must take place (once per t).
+
+1. Upon issuance of $t$, $I$ uniquely assigns to it a serial number $s$, which
+is recorded to the public ledger and privately communicated to $H$.
+
+2. $H$ requests from $I$ to record their commitment to $s$ in the public ledger.
+In particular, $H$ chooses a secret trapdoor $r$ and computes a commitment
+$$c = Comm(r, s)$$
+which they privately communicate to $I$. Note that this commitment is generated
+once per $t$ and will be used in any subsequent prove-verify session concerning
+this title.
+
+3. Being the issuer of $t$, $I$ approves $H$'s commitment to $s$ and appends
+it to the public ledger. Note that only the issuer $I$ of $t$ should be able to approve $c$ and append it to the public ledger. That is, in the cryptocurrency
+terminology, approval on behalf of $I$ is equivalent to the $H$ having spent
+1 BTC to an escrow pool. Note that $H$ can anytime check whether $c$ has indeed
+been recorded, since the ledger is public.
+
+
 ### Performance and storage optimization
 
 #### Optimizing proof generation
@@ -96,6 +117,5 @@ requirements 1-4.
 
 ## Appendix
 
-### Schnorr protocol
-### Generic zk-SNARK scheme
-### Merkle-proof of inclusion
+### A Generic zk-SNARK scheme
+### B Merkle-proof of inclusion
