@@ -35,7 +35,7 @@ prove *for themselves* possession of a title $t$
 
 1. without revealing their identity (public key)
 2. without disclosing any info about $t$, except for
-the claim that it exists among their acquired qualifications
+the fact that it exists among their acquired qualifications
 3. in one single communication step
 4. without involvement of anybody else in that step
 (say, the Issuer of $t$).
@@ -46,7 +46,7 @@ thought of as proof of *inclusion* in a set of recordedly awarded titles
 (possibly of a special kind) strongly correlated to the prover's (unrevealed)
 identity. In doing so, we employ the *zk-SNARK* cryptographic
 scheme combined with a commitment mechanism. In particular, proof of possession
-is a zk-SNARK proof.
+will be a zk-SNARK proof.
 
 Such a construction will partly resemble the *ZeroCash*
 anonymous payment scheme, with each title interpreted as 1 BTC (bitcoin) and
@@ -65,8 +65,8 @@ appended to the ledger not by the Holder, but by the Issuer (see Step 3 below
 for details). Note however that this involvement does *not* violate
 requirement 4: it takes place *prior to* generation and transmission of
 any proof of possession for $t$ (the communication step mentioned in
-requirement 3). More specifically, $I$ is restricted to once participating in
-the common setup of these proofs, without actually involving to any of them.
+requirement 3). More specifically, $I$ 's role is limited to the context
+preparation of these proofs, without even being involved to any of them.
 
 It should be finally stressed that the here proposed *APP* protocol is not
 intended to replace *ZKD* and should not be considered as an improvement of it.
@@ -83,25 +83,35 @@ possibly non-anonymous proof-verify session (say, in the *ZKD* context).
 2. Being a zk-SNARK protocol, *APP*'s setup presupposes a public ceremony for
 destroying the randomness used in the Common Reference String (CRS) generation.
 
+With these limitation in mind, we proceed to the exact description
+of the protocol.
+
 ## The Anonymous Proof of Possession (APP) Protocol
 
-### Preliminaries
+### Setup
 
-We expose here the cryptographic flow we want to achieve in view of the
-requirements 1-4.
+As usually, an append-only public ledger (say, blockchain) is available, where
+all actions of network entities are stored in the form of serial numbers.
+Serial numbers can be randomly selected but unique for each action; they are
+accompanied by a label, indicating the kind of action to record in the ledger.
+Only predefined labels are considered to be acceptable serial numbers;
+furthermore, special rules might determine which labels are allowed to be
+recorded by each kind of network entity.
+
+
+#### The COMM label   
 
 #### Commitment mechanism
 
+#### CRS generation
 
-### Protocol description
-
-#### Setup
-
-#### Cryptographic flow
+### Cryptographic flow
 
 Let $t$ be a title held by a Holder $H$ and issued by Issuer $I$. In order for
 $H$ to be able to anonymously prove possession of $t$ at any future moment, the
 following Steps 1-3 must take place (once per t).
+
+#### Proof-context preparation
 
 1. Upon issuance of $t$, $I$ uniquely assigns to it a serial number $s$, which
 they record to the public ledger and privately communicate to $H$.
@@ -120,13 +130,23 @@ cryptocurrency terminology, approval on behalf of $I$ is equivalent to a
 guaratee that $H$ has spent 1 BTC to an escrow pool. $H$ can anytime
 check whether $c$ has indeed been recorded, since the ledger is public.
 
-*I* needs never again interact with either *H* or any possible verifier. Their
-role is limited in approving the record *c*, which serves as disguise of *s*,
-and thus *t*, in the public ledger. This disguise guarantees that proofs of
-possession of *t* are indeed "zero-knowledge" with respect to it, since they
-will only contain references to *c*.
-
 #### Anonymization via public predicate
+
+*I* needs never again interact with either *H* or any possible verifier. Their
+role is limited to once approving the record *c*, which will eternally serve as
+disguise of *s* (and thus *t*) in the public ledger. This disguise guarantees
+that proofs of possession for *t* are indeed "zero-knowledge" with respect to
+its content, since they will only contain references to *c* and *s* cannot be
+inferred from the latter. More accurately, a proof of possession for $t$
+amounts to proving the following NP-complete statement:
+
+$$\text{"I know } r \text{ such that } Comm(r, s) \text{ appears in the public ledger with label COMM"}$$
+
+or equivalently, using the fixed zk-SNARK public predicate,
+
+$$\text{"I know } r \text{ such that } F(r, s) = 1\text{"}$$
+
+#### Proof-verify session
 
 ### Performance and storage optimization
 
@@ -134,7 +154,46 @@ will only contain references to *c*.
 
 #### Optimizing verification
 
+## Notes on the application architecture
+
 ## Appendix
 
-### A Generic zk-SNARK scheme
-### B Merkle-proof of inclusion
+### A Generic commitment scheme
+
+A (*statistically*) *secure commitment scheme* consists of a pair of functions
+
+$$r, m \mapsto c = Comm(r, m)\text{,}$$
+
+where $c$ is referred to as *commitment* to the *message* $m$ with
+*trapdoor* $r$, and
+
+$$r, c \mapsto m = Open(r, c)$$
+
+referred to as the *opening function*, such that
+
+1. (*Correctness*) opening the commitment with the correct trapdoor yields the
+original message, i.e.
+
+$$Open(r, Comm(r, m)) = m$$
+
+2. (*Hiding*) it is computationally infeasible to infer the original message
+from the commitment alone, i.e., given only $c = Comm(r, m)$, it is (with
+overwhelming probability) impossible to find $r'$ such that $m = Open(r^{\prime}, c)$
+
+3. (*Binding*) it is computationally infeasible to extract from the commitment a
+message other than the original, i.e., given $c = Comm(r, m)$, it is (with
+overwhelming probability) impossible to find $r^{\prime}$ such that
+$Open(r^{\prime}, c) \neq m$
+
+The following application is of practical interest: let *A* commit to a
+message $m$ with trapdoor $r$ and send the commitment $c$ to *B*. The
+*hiding* property means that $c$ is like a box containing $m$ in the hands of
+*B*, whose key $r$ is controlled by *A*: *B* will never learn $m$ until
+*A* chooses to reveal *r* to them. *Correctness* means that the box $c$ indeed
+contains $m$, so that *B* really learns $m$ if *A* chooses to reveal *r*.
+The *binding* property means that the box $c$ can only contain $m$: *A* cannot
+falsify a trapdoor so that opening the commitment leads to any meaningful
+content except for the original.
+
+### B Generic zk-SNARK scheme
+### C Merkle-proof of inclusion

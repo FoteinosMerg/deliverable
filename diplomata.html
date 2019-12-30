@@ -16,41 +16,63 @@
 <p>Purpose of this text is to propose an alternative to the <em>ZKD</em> protocol for the case where the Holder's anonymity is desired and the (content of the) title should not be revealed. This pertains to the following meritocratic scenario: Holder and Verifier meet anonymously online and the Holder wishes to prove <em>for themselves</em> possession of a title <span class="math inline">\(t\)</span></p>
 <ol style="list-style-type: decimal">
 <li>without revealing their identity (public key)</li>
-<li>without disclosing any info about <span class="math inline">\(t\)</span>, except for the claim that it exists among their acquired qualifications</li>
+<li>without disclosing any info about <span class="math inline">\(t\)</span>, except for the fact that it exists among their acquired qualifications</li>
 <li>in one single communication step</li>
 <li>without involvement of anybody else in that step (say, the Issuer of <span class="math inline">\(t\)</span>).</li>
 </ol>
-<p>The proposed protocol will be referred to as <em>Anonymous Proof of Possession Protocol</em> (<em>APP</em>). Proof of possession should be thought of as proof of <em>inclusion</em> in a set of recordedly awarded titles (possibly of a special kind) strongly correlated to the prover's (unrevealed) identity. In doing so, we employ the <em>zk-SNARK</em> cryptographic scheme combined with a commitment mechanism. In particular, proof of possession is a zk-SNARK proof.</p>
+<p>The proposed protocol will be referred to as <em>Anonymous Proof of Possession Protocol</em> (<em>APP</em>). Proof of possession should be thought of as proof of <em>inclusion</em> in a set of recordedly awarded titles (possibly of a special kind) strongly correlated to the prover's (unrevealed) identity. In doing so, we employ the <em>zk-SNARK</em> cryptographic scheme combined with a commitment mechanism. In particular, proof of possession will be a zk-SNARK proof.</p>
 <p>Such a construction will partly resemble the <em>ZeroCash</em> anonymous payment scheme, with each title interpreted as 1 BTC (bitcoin) and the holders' commitments recorded in the public ledger. There are however two major differences:</p>
 <ol style="list-style-type: decimal">
 <li><p>No &quot;Direct Anonymous Payment&quot; method is here facilitated, that is, transfer of titles(=coins) from holder to holder is <em>not</em> anyhow taken into account. This allows to stay away from the intricacies of the key-address machinery surrounding commitments in the ZeroCash cryptographic flow.</p></li>
-<li><p>Except for the Prover(=Holder) and Verifier, a third party, the <em>Issuer</em>, is responsible for recording the Holder's commitment: contrary to the commitment to a coin's serial number, the Holder's commitment to a title's serial number is appended to the ledger not by the Holder, but by the Issuer (see Step 3 below for details). Note however that this involvement does <em>not</em> violate requirement 4: it takes place <em>prior to</em> generation and transmission of any proof of possession for <span class="math inline">\(t\)</span> (the communication step mentioned in requirement 3). More specifically, <span class="math inline">\(I\)</span> is restricted to once participating in the common setup of these proofs, without actually involving to any of them.</p></li>
+<li><p>Except for the Prover(=Holder) and Verifier, a third party, the <em>Issuer</em>, is responsible for recording the Holder's commitment: contrary to the commitment to a coin's serial number, the Holder's commitment to a title's serial number is appended to the ledger not by the Holder, but by the Issuer (see Step 3 below for details). Note however that this involvement does <em>not</em> violate requirement 4: it takes place <em>prior to</em> generation and transmission of any proof of possession for <span class="math inline">\(t\)</span> (the communication step mentioned in requirement 3). More specifically, <span class="math inline">\(I\)</span> 's role is limited to the context preparation of these proofs, without even being involved to any of them.</p></li>
 </ol>
 <p>It should be finally stressed that the here proposed <em>APP</em> protocol is not intended to replace <em>ZKD</em> and should not be considered as an improvement of it. It is rather complementary to it in the context of a <em>Diplomata</em> application, whenever the utmost degree of anonymity is desired. In fact, <em>APP</em> has some practical drawbacks compared to <em>ZKD</em>:</p>
 <ol style="list-style-type: decimal">
 <li>Anonymity is at the cost of the Verifier's inability to check for certificate revocation. That is, if certificate revocation is supported by the system, then the proposed proof of possession is only equivalent to a <em>proof of acquisition</em>. In order for the Verifier to verify that a title is <em>still</em> possessed by a Holder, they will have to proceed to a second stage and run some additional, possibly non-anonymous proof-verify session (say, in the <em>ZKD</em> context).</li>
 <li>Being a zk-SNARK protocol, <em>APP</em>'s setup presupposes a public ceremony for destroying the randomness used in the Common Reference String (CRS) generation.</li>
 </ol>
+<p>With these limitation in mind, we proceed to the exact description of the protocol.</p>
 <h2 id="the-anonymous-proof-of-possession-app-protocol">The Anonymous Proof of Possession (APP) Protocol</h2>
-<h3 id="preliminaries">Preliminaries</h3>
-<p>We expose here the cryptographic flow we want to achieve in view of the requirements 1-4.</p>
+<h3 id="setup">Setup</h3>
+<p>As usually, an append-only public ledger (say, blockchain) is available, where all actions of network entities are stored in the form of serial numbers. Serial numbers can be randomly selected but unique for each action; they are accompanied by a label, indicating the kind of action to record in the ledger. Only predefined labels are considered to be acceptable serial numbers; furthermore, special rules might determine which labels are allowed to be recorded by each kind of network entity.</p>
+<h4 id="the-comm-label">The COMM label</h4>
 <h4 id="commitment-mechanism">Commitment mechanism</h4>
-<h3 id="protocol-description">Protocol description</h3>
-<h4 id="setup">Setup</h4>
-<h4 id="cryptographic-flow">Cryptographic flow</h4>
+<h4 id="crs-generation">CRS generation</h4>
+<h3 id="cryptographic-flow">Cryptographic flow</h3>
 <p>Let <span class="math inline">\(t\)</span> be a title held by a Holder <span class="math inline">\(H\)</span> and issued by Issuer <span class="math inline">\(I\)</span>. In order for <span class="math inline">\(H\)</span> to be able to anonymously prove possession of <span class="math inline">\(t\)</span> at any future moment, the following Steps 1-3 must take place (once per t).</p>
+<h4 id="proof-context-preparation">Proof-context preparation</h4>
 <ol style="list-style-type: decimal">
 <li><p>Upon issuance of <span class="math inline">\(t\)</span>, <span class="math inline">\(I\)</span> uniquely assigns to it a serial number <span class="math inline">\(s\)</span>, which they record to the public ledger and privately communicate to <span class="math inline">\(H\)</span>.</p></li>
 <li><p><span class="math inline">\(H\)</span> requests from <span class="math inline">\(I\)</span> to record their commitment to <span class="math inline">\(s\)</span> in the public ledger. In particular, <span class="math inline">\(H\)</span> chooses a secret trapdoor <span class="math inline">\(r\)</span> and computes a commitment <span class="math display">\[c = Comm(r, s)\]</span> which they privately communicate to <span class="math inline">\(I\)</span>. This commitment is generated once per <span class="math inline">\(t\)</span> and will be used in any subsequent prove-verify session concerning this title.</p></li>
 <li><p>Being the issuer of <span class="math inline">\(t\)</span>, <span class="math inline">\(I\)</span> verifies and approves <span class="math inline">\(H\)</span>'s commitment to <span class="math inline">\(s\)</span>, which they subsequently append to the public ledger. Note that only the issuer <span class="math inline">\(I\)</span> of <span class="math inline">\(t\)</span> should be able to approve <span class="math inline">\(c\)</span> and record it in the ledger. In the cryptocurrency terminology, approval on behalf of <span class="math inline">\(I\)</span> is equivalent to a guaratee that <span class="math inline">\(H\)</span> has spent 1 BTC to an escrow pool. <span class="math inline">\(H\)</span> can anytime check whether <span class="math inline">\(c\)</span> has indeed been recorded, since the ledger is public.</p></li>
 </ol>
-<p><em>I</em> needs never again interact with either <em>H</em> or any possible verifier. Their role is limited in approving the record <em>c</em>, which serves as disguise of <em>s</em>, and thus <em>t</em>, in the public ledger. This disguise guarantees that proofs of possession of <em>t</em> are indeed &quot;zero-knowledge&quot; with respect to it, since they will only contain references to <em>c</em>.</p>
 <h4 id="anonymization-via-public-predicate">Anonymization via public predicate</h4>
+<p><em>I</em> needs never again interact with either <em>H</em> or any possible verifier. Their role is limited to once approving the record <em>c</em>, which will eternally serve as disguise of <em>s</em> (and thus <em>t</em>) in the public ledger. This disguise guarantees that proofs of possession for <em>t</em> are indeed &quot;zero-knowledge&quot; with respect to its content, since they will only contain references to <em>c</em> and <em>s</em> cannot be inferred from the latter. More accurately, a proof of possession for <span class="math inline">\(t\)</span> amounts to proving the following NP-complete statement:</p>
+<p><span class="math display">\[\text{&quot;I know } r \text{ such that } Comm(r, s) \text{ appears in the public ledger with label COMM&quot;}\]</span></p>
+<p>or equivalently, using the fixed zk-SNARK public predicate,</p>
+<p><span class="math display">\[\text{&quot;I know } r \text{ such that } F(r, s) = 1\text{&quot;}\]</span></p>
+<h4 id="proof-verify-session">Proof-verify session</h4>
 <h3 id="performance-and-storage-optimization">Performance and storage optimization</h3>
 <h4 id="optimizing-proof-generation">Optimizing proof generation</h4>
 <h4 id="optimizing-verification">Optimizing verification</h4>
+<h2 id="notes-on-the-application-architecture">Notes on the application architecture</h2>
 <h2 id="appendix">Appendix</h2>
-<h3 id="a-generic-zk-snark-scheme">A Generic zk-SNARK scheme</h3>
-<h3 id="b-merkle-proof-of-inclusion">B Merkle-proof of inclusion</h3>
+<h3 id="a-generic-commitment-scheme">A Generic commitment scheme</h3>
+<p>A (<em>statistically</em>) <em>secure commitment scheme</em> consists of a pair of functions</p>
+<p><span class="math display">\[r, m \mapsto c = Comm(r, m)\text{,}\]</span></p>
+<p>where <span class="math inline">\(c\)</span> is referred to as <em>commitment</em> to the <em>message</em> <span class="math inline">\(m\)</span> with <em>trapdoor</em> <span class="math inline">\(r\)</span>, and</p>
+<p><span class="math display">\[r, c \mapsto m = Open(r, c)\]</span></p>
+<p>referred to as the <em>opening function</em>, such that</p>
+<ol style="list-style-type: decimal">
+<li>(<em>Correctness</em>) opening the commitment with the correct trapdoor yields the original message, i.e.</li>
+</ol>
+<p><span class="math display">\[Open(r, Comm(r, m)) = m\]</span></p>
+<ol start="2" style="list-style-type: decimal">
+<li><p>(<em>Hiding</em>) it is computationally infeasible to infer the original message from the commitment alone, i.e., given only <span class="math inline">\(c = Comm(r, m)\)</span>, it is (with overwhelming probability) impossible to find <span class="math inline">\(r&#39;\)</span> such that <span class="math inline">\(m = Open(r^{\prime}, c)\)</span></p></li>
+<li><p>(<em>Binding</em>) it is computationally infeasible to extract from the commitment a message other than the original, i.e., given <span class="math inline">\(c = Comm(r, m)\)</span>, it is (with overwhelming probability) impossible to find <span class="math inline">\(r^{\prime}\)</span> such that <span class="math inline">\(Open(r^{\prime}, c) \neq m\)</span></p></li>
+</ol>
+<p>The following application is of practical interest: let <em>A</em> commit to a message <span class="math inline">\(m\)</span> with trapdoor <span class="math inline">\(r\)</span> and send the commitment <span class="math inline">\(c\)</span> to <em>B</em>. The <em>hiding</em> property means that <span class="math inline">\(c\)</span> is like a box containing <span class="math inline">\(m\)</span> in the hands of <em>B</em>, whose key <span class="math inline">\(r\)</span> is controlled by <em>A</em>: <em>B</em> will never learn <span class="math inline">\(m\)</span> until <em>A</em> chooses to reveal <em>r</em> to them. <em>Correctness</em> means that the box <span class="math inline">\(c\)</span> indeed contains <span class="math inline">\(m\)</span>, so that <em>B</em> really learns <span class="math inline">\(m\)</span> if <em>A</em> chooses to reveal <em>r</em>. The <em>binding</em> property means that the box <span class="math inline">\(c\)</span> can only contain <span class="math inline">\(m\)</span>: <em>A</em> cannot falsify a trapdoor so that opening the commitment leads to any meaningful content except for the original.</p>
+<h3 id="b-generic-zk-snark-scheme">B Generic zk-SNARK scheme</h3>
+<h3 id="c-merkle-proof-of-inclusion">C Merkle-proof of inclusion</h3>
 </body>
 </html>
