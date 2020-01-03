@@ -97,11 +97,11 @@ of the protocol.
 As usually, an append-only public ledger (say, blockchain) is available, where
 all actions of network entities are recorded in the form of serial number.
 Serial numbers can be randomly selected but unique for each
-action; they are accompanied by a label, indicating the kind of action
-to record in the ledger. Only a set of predefined labels is acceptable;
-furthermore, special rules might determine which labels are allowed to be
+action; they are accompanied by a tag, indicating the kind of action
+to record in the ledger. Only a set of predefined tags is acceptable;
+furthermore, special rules might determine which tags are allowed to be
 used by the various network entities. For example, only issuers are allowed to
-append serial numbers with the label corresponding to title issuance.
+append serial numbers with the tag corresponding to title issuance.
 
 ### Preliminary discussion
 
@@ -160,15 +160,15 @@ proof-verify sessions concerning $t$.
 
 What can this proof-of-knowledge mechanism be? In fact, the holder does not
 even have to point to the $c$ public record: given $s$, and assuming that
-approved commitments are recorded with a label COMM indicating
+approved commitments are recorded with a tag COMM indicating
 their nature, $H$ needs only prove the following claim:
 
-$$\text{"I know } r \text{ such that } Comm(r, s) \text{ appears in the public ledger with label COMM" }$$
+$$\text{"I know } r \text{ such that } Comm(r, s) \text{ appears in the public ledger with tag COMM" }$$
 
 This statement is obviously NP-complete. Consequently, it can be produced as
 a zk-SNARK proof upon the predicate
 
-$$F(r, s) = Comm(r, s) \text{ appears in the public ledger with label COMM }$$
+$$F(r, s) = Comm(r, s) \text{ appears in the public ledger with tag COMM }$$
 
 In other words, the desired proof-of-knowledge mechanism can be a zk-SNARK
 cryptosystem with public predicate $F$. The trapdoor $r$ serves
@@ -241,9 +241,59 @@ $I$ appends $c$ to the ledger; otherwise the holder's request is rejected.
 The trapdoor remains unrevealed to the issuer as should.   
 
 
-### Cryptographic flow
+### Formal description
 
 #### Setup
+
+Let *L* denote the public ledger. Among possibly others, we define a tag
+
+<p style="text-align: center;">COMM,</p>
+
+indicating a commitment to a title-issuance serial number, and specify that
+*only Issuers have the right to append records with this tag to the ledger*.
+
+##### Commitment mechanism
+
+We fix a sufficiently high security parameter $n$ and randomly choose
+$p = 2q + 1$ to be a strong $(n + 1)$-prime (i.e., such that $q$ is prime).
+Denoting by $Q\subset\mathbb{Z}_p^\star$ the group of quadratic residues,
+we randomly fix a generator $g$ of $Q$ and a residue $h \in Q$. We denote by
+
+$$\mathbb{Z}_p^\star\times\mathbb{Z}_p\ni(r, s) \mapsto Comm(r, s) = g^r h^s$$
+
+the Pedersen function over the pair $(g, h)$. Under the above
+assumptions, discrete log hardness becomes plausible and $Comm$
+may be considered as a statistically-secure commitment mechanism.
+We specify that *serial numbers assigned by Issuers to title
+issuance be contained in* $\mathbb{Z}_p$.
+
+##### zk-SNARK infrastructure
+
+We consider the predicate
+
+$$F(r, s) = Comm(r, s) \text{ appears in } L \text{ with tag COMM }$$
+
+Both lookup in $L$ and evaluation of $Comm$ have polynomial time complexity.
+Consequently, for any $s$, the statement
+
+$$\text{I know } r \text{ such that } F(r, s) = 1$$
+
+is NP-complete with respect to $r$. This allows to use $F$ as the public
+predicate of a zk-SNARK cryptosystem, where $r$ is thought of as the private
+witness to the public instance $s$. More accurately, feeding $F$ to a
+CRS-generator, we denote by
+
+<p style="text-align: center;">CRS = $(pk, vk)$</p>
+
+the pair of proving and verifying keys of the induced zk-SNARK cryptosystem. We
+will denote by
+
+$$(\mathit{pk}, s, r) \mapsto \pi = Prover(\mathit{pk}, s, r),$$
+$$(vk, s, \pi) \mapsto Verifier(vk, s, \pi) \in {0, 1}$$
+
+the Prover and Verifier functionalities of the zk-SNARK cryptosystem
+respectively. We specify that *every Holder can internally run a Prover
+and Verifiers coincide with Verifiers of the* zk-SNARK *cryptosystem*.
 
 <!-- ...
 
@@ -251,8 +301,9 @@ Let $t$ be a title held by a Holder $H$ and issued by Issuer $I$. In order for
 $H$ to be able to anonymously prove possession of $t$ at any
 future moment, the following Steps 1-4 must take place (once per t) -->
 
+#### Cryptographic flow
 
-#### Certification phase (once per title)
+##### Certification phase (once per title)
 
 <!-- 1. Upon issuance of $t$, $I$ uniquely assigns to it a serial number $s$. (For
 transparency or history reasons, $I$ might record $s$ in the public ledger,
@@ -274,7 +325,7 @@ cryptocurrency terminology, approval on behalf of $I$ is equivalent to a
 guaratee that $H$ has spent 1 BTC to an escrow pool. $H$ can anytime
 check whether $c$ has indeed been recorded, since the ledger is public. -->
 
-#### Proof-verify session
+##### Proof-verify session
 
 ### Performance and storage optimization
 
