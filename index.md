@@ -102,7 +102,7 @@ uniquely correlated verification key *vk* (uniformly used by all
 Verifiers). Computation of CRS involves also a once used randomness
 $\mathit{lambda}$, so that it can formally be expressed as follows:
 
-$$ (F, \mathit{lambda}) \mapsto CRS := (pk, vk) =
+$$ (F, \mathit{lambda}) \mapsto \text{CRS} := (pk, vk) =
    \mathrm{Setup}(F, \mathit{lambda})$$
 
 It is essential that $\mathit{lambda}$ remains forever secret: leakage of
@@ -120,13 +120,13 @@ $F(x, \cdot)$ is satisfiable by some known $w$, without disclosing any info
 about $w$ (i.e., except for the claim that it is known). This can formally be
 expressed as
 
-$$ (\mathit{pk}, x, w) \mapsto \pi = Prover(\mathit{pk}, x, w) $$
+$$ (\mathit{pk}, x, w) \mapsto \pi = \text{Prover}(\mathit{pk}, x, w) $$
 
 The Verifier uses the verifying part $\mathit{vk}$ of the CRS to
 operate upon the provided proof, accepting or rejecting according to
 whether it was found to be valid, resp. invalid:
 
-$$ (vk, x, \pi) \mapsto Verifier(vk, x, \pi) \in \{0, 1\} $$
+$$ (vk, x, \pi) \mapsto \text{Verifier}(vk, x, \pi) \in \{0, 1\} $$
 
 Note that typically anyone can run a Verifier.
 

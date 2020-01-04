@@ -70,13 +70,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h3 id="cryptographic-flow">Cryptographic flow</h3>
 <p>We expose here the ZS-NARK cryptographic flow for reference, in order to gradually attain semi-formal language and terminology. The flow involves three basic algorithms run by homonymous and mutually independent components: <em>Setup</em>, <em>Prover</em> and <em>Verifier</em>. How these components are distributed among network entities depends on the protocol under implementation.</p>
 <p>The Setup algorithm is typically run once by a unanimously trusted party. It is fed with a R1CS (i.e., the fixed public predicate <em>F</em>) and outputs the public CRS (<em>Common Reference String</em>) involved in any subsequent proof generation and verification. In particular, the CRS consists of a proving key <em>pk</em> (uniformly used by all Provers) and a uniquely correlated verification key <em>vk</em> (uniformly used by all Verifiers). Computation of CRS involves also a once used randomness <span class="math inline">\(\mathit{lambda}\)</span>, so that it can formally be expressed as follows:</p>
-<p><span class="math display">\[ (F, \mathit{lambda}) \mapsto CRS := (pk, vk) =
+<p><span class="math display">\[ (F, \mathit{lambda}) \mapsto \text{CRS} := (pk, vk) =
    \mathrm{Setup}(F, \mathit{lambda})\]</span></p>
 <p>It is essential that <span class="math inline">\(\mathit{lambda}\)</span> remains forever secret: leakage of randomness would allow a malicious prover to generate false proofs that can erroneously be verified. Trustedness of the Setup party must thus be equivalent to the unanimously accepted guarantee, that the <span class="math inline">\(\mathit{lambda}\)</span> parameter has irreversibly been eliminated after CRS generation (which is the reason for the destruction ceremonies surrounding ZCash etc.).</p>
 <p>Upon every proof generation, the Prover is fed with a public instance <span class="math inline">\(x\)</span> and a secret witness <span class="math inline">\(w\)</span> for it. Using the proving part <span class="math inline">\(\mathit{pk}\)</span> of the CRS, the prover generates a proof <span class="math inline">\(\pi\)</span> attesting that <span class="math inline">\(F(x, \cdot)\)</span> is satisfiable by some known <span class="math inline">\(w\)</span>, without disclosing any info about <span class="math inline">\(w\)</span> (i.e., except for the claim that it is known). This can formally be expressed as</p>
-<p><span class="math display">\[ (\mathit{pk}, x, w) \mapsto \pi = Prover(\mathit{pk}, x, w) \]</span></p>
+<p><span class="math display">\[ (\mathit{pk}, x, w) \mapsto \pi = \text{Prover}(\mathit{pk}, x, w) \]</span></p>
 <p>The Verifier uses the verifying part <span class="math inline">\(\mathit{vk}\)</span> of the CRS to operate upon the provided proof, accepting or rejecting according to whether it was found to be valid, resp. invalid:</p>
-<p><span class="math display">\[ (vk, x, \pi) \mapsto Verifier(vk, x, \pi) \in \{0, 1\} \]</span></p>
+<p><span class="math display">\[ (vk, x, \pi) \mapsto \text{Verifier}(vk, x, \pi) \in \{0, 1\} \]</span></p>
 <p>Note that typically anyone can run a Verifier.</p>
 <p>The whole flow is summarized in the following figure:</p>
 <p>...[Figure] (1)</p>
