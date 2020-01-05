@@ -94,6 +94,7 @@ With these limitation in mind, we proceed to the exact description
 of the protocol. Abstract aspects of the involved primitives
 are exposed for reference in the Appendix.
 
+
 ## The Anonymous Proof of Possession (APP) Protocol
 
 As usually, an append-only public ledger (say, blockchain) is available, where
@@ -104,6 +105,7 @@ to record in the ledger. Only a set of predefined tags is acceptable;
 furthermore, special rules might determine which tags are allowed to be
 used by the various network entities. For example, only issuers are allowed to
 append serial numbers with the tag corresponding to title issuance.
+
 
 ### Preliminary discussion
 
@@ -195,6 +197,7 @@ commitment to the correct serial number without knowing the secret trapdoor?
 To do so, we will take advantage of the commitment's internal mechanism. The
 scheme particularly suited for our purpose is the *Pedersen commitment scheme*,
 as will be explained in the following section.    
+
 
 #### Certification
 
@@ -310,6 +313,7 @@ but this is irrelevant to what follows.)
 In order for $H$ to be able to repeatedly prove possession of $t$,
 they must enter at will the following certification phase (once per $t$).
 
+
 ##### Certification phase (once per title)
 
 4. Holder $H$ randomly chooses a trapdoor $r$ and computes $c = Comm(r, s)$.
@@ -333,6 +337,7 @@ the certification phase terminates.
 Note that a dishonest issuer cannot avoid recording $c$ to the public ledger,
 since a honest holder can anytime audit $L$ to see if their commitment has
 been appended.
+
 
 ##### Proof-verify session
 
@@ -358,24 +363,79 @@ zk-SNARK Verifier, $ans = \text{Verifier}(\mathit{vk}, s, \pi)$.
 14. If $ans = 1$, $V$ accepts $H$'s claim of knowledge;
 otherwise the claim is rejected.
 
+
 ### Security proof and honesty assumptions
 
-Note that, assuming security of the certification phase, security of the
+<!-- Note that, assuming security of the certification phase, security of the
 proof-verify session depends entirely on the completeness and soundness
 of the underlying zk-SNARK cryptosystem (no honesty assumptions about $H$
 and $V$). Consequently, we only need prove security of the certification phase
 under specific honesty assumptions about $H$ and $I$. These assumptions are not
 stronger than the honesty assumptions made of the ZKD protocol.
 
-...
+... -->
 
-### Performance and storage optimization
 
-#### Optimizing commitment detection in the public ledger
+### Performance optimization
 
-#### Optimizing verification
+#### Optimizing commitment detection for scaling
 
-## Notes on the application architecture
+Detection of a particular record with tag COMM in the ledger
+is crucial for the protocol and an operation to be massively repeated
+(once for each proof-verify session), since it is involved in the
+evaluation of the zk-SNARK public predicate. More accurately,
+ledger lookup is incorporated in the CRS, which is the fixed ingredient
+($vk$) in the verification of zk-SNARK proofs. A naive
+implementation of commitment detection can thus severely limit scalability,
+since the verification algorithm most probably grows linearly with the
+length of the public ledger.
+
+We can remedy this by organizing certified commitments to an additional
+linear structure, representing the leaves of a Merkle-tree $T$:
+each time a commitment is certified,
+$T$ is updated with the hash of this commitment.
+In other words, tree $T$ records a specialized history of
+certified commitments, so that one can directly audit $T$ instead of $L$
+to see if a commitment has been approved by an issuer. It is well known
+that update and leaf lookup for a Merkle-tree are of logarithmic time
+and space complexity with respect to the number of leaves. Consequently,
+auditing $T$ instead of $L$ reduces the complexity of $F$'s evaluation
+from linear to logarithmic with respect to the number of records.
+
+In integrating the Merkle-tree machinery with our
+protocol, we proceed as follows. Upon setup, we
+initialize an empty Merkle-tree $T$ with hash function $\tilde{h}$
+and assume that a $verify\_merkle\_proof()$
+function is available for verifying Merkle-proofs. Let
+$T.audit\_proof()$ denote $T$'s functionality for generating audit
+proofs upon given records. In particular, a record $a$ has been
+hashed and stored among $T$'s leaves if and only if
+
+$$verify\_merkle\_proof(T.audit\_proof(\tilde{h}(a))) = 1$$
+
+With this notation, the zk-SNARK public predicate reformulates as
+
+$$F(r, s) = verify\_merkle\_proof(T.audit\_proof(\tilde{h}(Comm(r, s))))$$
+
+In order for this to work, all we have to do is modify Step 9 of the
+certification phase as follows:
+
+<p style="text-align: center;">Issuer $I$ updates $T$ with $c$ and informs $H$.</p>
+
+Holder $H$ can then directly audit $T$ to check if their commitment has
+indeed been certified. Note that, in this modified protocol,
+usage of the COMM tag becomes inessential with respect to our specific
+purposes. However, issuer $I$ could still record certified commitments in $L$
+with tag COMM for history and transparency reasons.   
+
+
+#### Accelerating verification
+
+This is a generic zk-SNARK technique exclusively affecting the Setup
+and Verifier algorithms of the underlying zk-SNARK cryptosystem.
+See *Accelerating verification with a preprocessed key* in Appendix B.
+
+## Application architecture
 
 ## Appendix
 
@@ -415,6 +475,7 @@ counterpoint, again in view of correctness, the *binding* property means that
 the box can be unlocked by *A* in only one meaningful way: *A*
 cannot fabricate a trapdoor so that opening the box with it leads
 to any acceptable content other than the original.
+
 
 ### B Generic zk-SNARK scheme
 
@@ -591,12 +652,13 @@ $$
 \end{align*}
 $$
 
-#### Optimizing verification with preprocessed keys
 
-For the purpose of faster verification, $vk$
-can be further processed during the initial setup, yielding a so
-called *preprocessed* verification key $pvk$. In particular, a small
-amount of extra precomputed info can be added to it, in which case the
+#### Accelerating verification with a preprocessed key
+
+For the purpose of faster verification, the verifying key $vk$
+may be further processed during initial setup of the zk-SNARK cryptosystem,
+yielding a so called *preprocessed* verification key $pvk$. In particular,
+a small amount of extra precomputed info can be added to it, in which case the
 Verifier algorithm must also be modified appropriately (*online*
 Verifier). In this case, Figure 1 transforms as follows:
 
@@ -604,5 +666,3 @@ Verifier). In this case, Figure 1 transforms as follows:
 
 Note that proof generation is not affected by the usage of
 preprocessed verification keys.
-
-### C Merkle-proof of inclusion
