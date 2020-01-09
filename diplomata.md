@@ -61,7 +61,7 @@ of titles(=coins) from holder to holder is not anyhow taken into account.
 This allows to stay away from the intricacies of the key-address machinery
 surrounding commitments in the ZeroCash cryptographic flow.
 
-2. Except for the Prover(=Holder) and Verifier, a third party, the *Issuer*, is
+2. Except for the Prover(=Holder) and Verifier, a third party, the *Issuer*,
 must be here involved in order to record the Holder's commitment.
 Note, however, that this involvement does not violate
 requirement 4: it takes place *prior to* generation and transmission of
@@ -453,7 +453,7 @@ to the former.
 There is still another way to violate exclusivity of rights upon $t$,
 stemming from a dishonest $I$ in collaboration with a dishonest holder
 $H^\prime$. Suppose that $I$ communicates $s$ to $H^\prime$, who then
-enters a certification phase with $I$: $H$ generates a correct commitment to
+enters a certification phase with $I$: $H^\prime$ generates a correct commitment to
 $s$, which $I$ maliciously (cf. Step 8) approves and appends to the ledger.
 It is then possible for $H^\prime$ to prove for themselves possession of
 the title awarded to $H$. It thus makes sense to consider the following honesty
